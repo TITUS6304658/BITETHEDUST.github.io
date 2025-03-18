@@ -1,1 +1,249 @@
-<h1>hee</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Explosion - Bites the Dust Effect (Slower)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(0,0,0,0) 100%);
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 999;
+    }
+    button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 15px 30px;
+      font-size: 20px;
+      background: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    /* Glitch Text CSS (แรงบันดาลใจจาก CodePen) */
+    .glitch {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 4rem;
+      color: white;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+      opacity: 0;
+    }
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+    .glitch::before {
+      left: 2px;
+      text-shadow: -2px 0 red;
+      clip: rect(24px, 550px, 90px, 0);
+      animation: glitch 2s infinite linear alternate-reverse;
+    }
+    .glitch::after {
+      left: -2px;
+      text-shadow: -2px 0 blue;
+      clip: rect(85px, 550px, 140px, 0);
+      animation: glitch2 3s infinite linear alternate-reverse;
+    }
+    @keyframes glitch {
+      0% {
+        clip: rect(44px, 9999px, 56px, 0);
+        transform: translate(0.5px, -0.5px);
+      }
+      20% {
+        clip: rect(85px, 9999px, 90px, 0);
+        transform: translate(-0.5px, 0.5px);
+      }
+      40% {
+        clip: rect(5px, 9999px, 10px, 0);
+        transform: translate(-0.5px, -0.5px);
+      }
+      60% {
+        clip: rect(15px, 9999px, 20px, 0);
+        transform: translate(0.5px, 0.5px);
+      }
+      80% {
+        clip: rect(65px, 9999px, 70px, 0);
+        transform: translate(-0.5px, 0.5px);
+      }
+      100% {
+        clip: rect(44px, 9999px, 56px, 0);
+        transform: translate(0.5px, -0.5px);
+      }
+    }
+    @keyframes glitch2 {
+      0% {
+        clip: rect(12px, 9999px, 15px, 0);
+        transform: translate(-0.5px, 0.5px);
+      }
+      20% {
+        clip: rect(52px, 9999px, 55px, 0);
+        transform: translate(0.5px, -0.5px);
+      }
+      40% {
+        clip: rect(22px, 9999px, 25px, 0);
+        transform: translate(0.5px, 0.5px);
+      }
+      60% {
+        clip: rect(32px, 9999px, 35px, 0);
+        transform: translate(-0.5px, -0.5px);
+      }
+      80% {
+        clip: rect(72px, 9999px, 75px, 0);
+        transform: translate(0.5px, -0.5px);
+      }
+      100% {
+        clip: rect(12px, 9999px, 15px, 0);
+        transform: translate(-0.5px, 0.5px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="activateBtn">Activate Bites the Dust!</button>
+  <div id="overlay"></div>
+  <!-- Glitch text element -->
+  <div class="glitch" id="glitchText" data-text="Bites the Dust"></div>
+  <audio id="soundEffect" src="https://www.myinstants.com/media/sounds/jojo-killer-queen-bite-the-dust.mp3"></audio>
+
+  <script>
+    // สร้างฉาก 3 มิติ
+    let scene = new THREE.Scene();
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // สร้างดาวในอวกาศ
+    let starGeometry = new THREE.BufferGeometry();
+    let starVertices = [];
+    for (let i = 0; i < 8000; i++) {
+      let x = (Math.random()-0.5)*3000;
+      let y = (Math.random()-0.5)*3000;
+      let z = (Math.random()-0.5)*3000;
+      starVertices.push(x, y, z);
+    }
+    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    let starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 1.5 });
+    let stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
+
+    // พื้นหลังออโรร่า
+    let auroraGeometry = new THREE.PlaneGeometry(3000, 3000);
+    let auroraTexture = new THREE.TextureLoader().load('https://i.imgur.com/Ry1kNtW.jpeg');
+    let auroraMaterial = new THREE.MeshBasicMaterial({ map: auroraTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+    let aurora = new THREE.Mesh(auroraGeometry, auroraMaterial);
+    aurora.position.set(0, 0, -1200);
+    scene.add(aurora);
+
+    // วงแหวนแรงโน้มถ่วง
+    let ringGeometry = new THREE.TorusGeometry(200, 50, 16, 100);
+    let ringMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    let gravityRing = new THREE.Mesh(ringGeometry, ringMaterial);
+    gravityRing.position.set(0, 0, -600);
+    scene.add(gravityRing);
+
+    // เอฟเฟค Time Spiral
+    let spiralGeometry = new THREE.TorusKnotGeometry(100, 20, 100, 16);
+    let spiralMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.7 });
+    let timeSpiral = new THREE.Mesh(spiralGeometry, spiralMaterial);
+    timeSpiral.position.set(0, 0, -800);
+    scene.add(timeSpiral);
+
+    camera.position.z = 800;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      stars.rotation.x += 0.0005;
+      stars.rotation.y += 0.0005;
+      aurora.rotation.z += 0.0002;
+      gravityRing.rotation.x += 0.01;
+      timeSpiral.rotation.x += 0.005;
+      timeSpiral.rotation.y += 0.005;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // เอฟเฟคเมื่อคลิกปุ่ม
+    const button = document.getElementById("activateBtn");
+    const overlay = document.getElementById("overlay");
+    const glitchText = document.getElementById("glitchText");
+    const soundEffect = document.getElementById("soundEffect");
+
+    button.addEventListener("click", () => {
+      soundEffect.play();
+
+      // แสดง glitch text ช้าลง
+      gsap.to(glitchText, { opacity: 1, duration: 0.1 });
+      gsap.to(glitchText, { opacity: 0, delay: 1, duration: 0.5 });
+
+      // เอฟเฟคแฟลชและเคลื่อนกล้องช้าลง
+      gsap.to(overlay, { opacity: 1, duration: 0.1 });
+      gsap.to(camera.position, { z: 50, duration: 0.5, ease: "power2.out" });
+
+      // เอฟเฟคสั่นของ canvas และ overlay
+      gsap.to(renderer.domElement, { duration: 0.2, x: "+=10", y: "+=10", repeat: 3, yoyo: true });
+      gsap.to(overlay, { duration: 0.2, x: "+=10", y: "+=10", repeat: 3, yoyo: true });
+
+      // ดาวในอวกาศระเบิดช้าลง
+      gsap.to(stars.rotation, { x: "+=5", y: "+=5", duration: 1, ease: "power2.out" });
+      gsap.to(starMaterial, { size: 5, duration: 1 });
+
+      // พื้นหลังออโรร่าขยายช้าลง
+      gsap.to(aurora.scale, { x: 1.5, y: 1.5, duration: 0.1 });
+
+      // วงแหวนแรงโน้มถ่วงขยายช้าลง
+      gsap.to(gravityRing.scale, { x: 2, y: 2, z: 2, duration: 0.5 });
+
+      // เอฟเฟค Time Spiral: หมุนและขยายช้าลง
+      gsap.to(timeSpiral.rotation, { z: "+=10", duration: 1, ease: "power2.out" });
+      gsap.to(timeSpiral.scale, { x: 2, y: 2, z: 2, duration: 3 });
+
+      // รีเซ็ตค่าเอฟเฟคหลังจากระเบิด
+      setTimeout(() => {
+        gsap.to(camera.position, { z: 800, duration: 1.5, ease: "power2.in" });
+        gsap.to(overlay, { opacity: 0, duration: 1 });
+        gsap.to(stars.rotation, { x: 0, y: 0, duration: 1.5, ease: "power2.in" });
+        gsap.to(starMaterial, { size: 1.5, duration: 1 });
+        gsap.to(aurora.scale, { x: 1, y: 1, duration: 1 });
+        gsap.to(gravityRing.scale, { x: 1, y: 1, z: 1, duration: 1 });
+        gsap.to(timeSpiral.scale, { x: 1, y: 1, z: 1, duration: 1 });
+      }, 2000);
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
